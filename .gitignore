@@ -4,3 +4,5 @@
 *.log
 *.synctex.gz
 Task1_Solution/Elixir.Deriv.beam
+Templets/report-templete.pdf
+Templets/report-templete.tex
