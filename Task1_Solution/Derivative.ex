@@ -1,7 +1,10 @@
 defmodule Deriv do
   @type literal() :: {:num, number()} | {:var, atom()}
   @type expr() ::
-          literal() | {:add, expr(), expr()} | {:mul, expr(), expr()} | {:exp, expr(), literal()}
+          literal() | {:add, expr(), expr()} | {:mul, expr(), expr()}
+          | {:exp, expr(), literal()} | {:div, literal(), expr()} |
+          # {:ln, literal(), expr()} | {:ln, literal(), literal()}
+          {:ln, expr()}
 
   def test_simple() do
     e = {:add, {:mul, {:num, 2}, {:var, :x}}, {:num, 4}}
@@ -12,8 +15,35 @@ defmodule Deriv do
     :ok
   end
 
-  def test_pow() do
-    e = {:add, {:exp, {:var, :x}, {:num, -3}}, {:num, 4}}
+  def test_add() do
+    e = {:add, {:var, :x}, {:num, 5}}
+    d = deriv(e, :x)
+    IO.write("Expression: #{p_print(e)}\n")
+    IO.write("Derivative of expression: #{p_print(d)}\n")
+    IO.write("Simplified: #{p_print(simplify(d))}\n")
+    :ok
+  end
+
+  def test_mul() do
+    e = {:add, {:var, :x}, {:mul, {:num, 5}, {:exp, {:var, :x}, {:num, 4}}}}
+    d = deriv(e, :x)
+    IO.write("Expression: #{p_print(e)}\n")
+    IO.write("Derivative of expression: #{p_print(d)}\n")
+    IO.write("Simplified: #{p_print(simplify(d))}\n")
+    :ok
+  end
+
+  def test_exp1() do
+    e = {:add, {:exp, {:var, :x}, {:num, 3}}, {:num, 4}}
+    d = deriv(e, :x)
+    IO.write("Expression: #{p_print(e)}\n")
+    IO.write("Derivative of expression: #{p_print(d)}\n")
+    IO.write("Simplified: #{p_print(simplify(d))}\n")
+    :ok
+  end
+
+  def test_exp2() do
+    e = {:exp, {:add, {:mul, {:num, 2}, {:var, :x}}, {:num, 3}}, {:num, 2}}
     d = deriv(e, :x)
     IO.write("Expression: #{p_print(e)}\n")
     IO.write("Derivative of expression: #{p_print(d)}\n")
@@ -26,7 +56,39 @@ defmodule Deriv do
       {:add,
        {:add, {:mul, {:num, 2}, {:exp, {:var, :x}, {:num, 2}}}, {:mul, {:num, 3}, {:var, :x}}},
        {:num, 5}}
+    d = deriv(e, :x)
+    IO.write("Expression: #{p_print(e)}\n")
+    IO.write("Derivative of expression: #{p_print(d)}\n")
+    IO.write("Simplified: #{p_print(simplify(d))}\n")
+    :ok
+  end
 
+  def test_div() do
+    e =
+      {:div,
+        {:num, 4},
+        {:exp, {:add, {:mul, {:var, :x}, {:num, 3}}, {:num, 2}}, {:num, 2}}
+      }
+    d = deriv(e, :x)
+    IO.write("Expression: #{p_print(e)}\n")
+    IO.write("Derivative of expression: #{p_print(d)}\n")
+    IO.write("Simplified: #{p_print(simplify(d))}\n")
+    :ok
+  end
+
+  def test_ln1() do
+    e =
+      {:ln, {:exp, {:var, :x}, {:num, 2}}}
+    d = deriv(e, :x)
+    IO.write("Expression: #{p_print(e)}\n")
+    IO.write("Derivative of expression: #{p_print(d)}\n")
+    IO.write("Simplified: #{p_print(simplify(d))}\n")
+    :ok
+  end
+
+  def test_ln() do
+    e =
+      {:mul, {:num, 2}, {:ln, {:exp, {:add, {:mul, {:num, 2}, {:var, :x}}, {:num, 3}}, {:num, 2}}}}
     d = deriv(e, :x)
     IO.write("Expression: #{p_print(e)}\n")
     IO.write("Derivative of expression: #{p_print(d)}\n")
@@ -58,6 +120,30 @@ defmodule Deriv do
     {:mul, {:mul, {:num, n}, {:exp, u, {:num, n - 1}}}, deriv(u, v)}
   end
 
+  #d/dx(k/(u(x)^n)) = -nk*u'(x)/(u(x)^(n+1))
+  def deriv({:div, {:num, k}, {:exp, e, {:num, n}}}, v) do
+    {:div,
+      {:mul,
+        {:mul, {:num, k}, {:num, -n}},
+        deriv(e, v)
+      },
+      {:exp, e, {:num, n + 1}}
+    }
+  end
+
+  def deriv({:ln, e}, v) do {:div, deriv(e, v), e} end
+
+  # d/dx(k*ln(u(x)^n)) = kn*u'(x)/u(x)
+  def deriv({:mul, {:num, k}, {:exp, e, {:num, n}}}, v) do
+    {:div,
+      {:mul,
+        {:mul, {:num, k}, {:num, n}},
+        deriv(e, v)
+      },
+      {:exp, e, {:num, n}}
+    }
+  end
+
   ###### --------------------- #######
 
   #simplifies the expression by removing zeros and ones etc.
@@ -73,6 +159,12 @@ defmodule Deriv do
     simplify_exp(simplify(e1), simplify(e2))
   end
 
+  def simplify({:div, e1, e2}) do
+    simplify_div(simplify(e1), simplify(e2))
+  end
+
+  def simplify({:ln, e}) do simplify_ln(simplify(e)) end
+
   def simplify(e) do e end
 
   def simplify_add({:num, 0}, e2) do e2 end
@@ -84,14 +176,35 @@ defmodule Deriv do
   def simplify_add(e1, e2) do {:add, e1, e2} end
 
   def simplify_mul({:num, 0}, _) do {:num, 0} end
-
   def simplify_mul(_, {:num, 0}) do {:num, 0} end
-
   def simplify_mul({:num, 1}, e2) do e2 end
-
   def simplify_mul(e1, {:num, 1}) do e1 end
-
   def simplify_mul({:num, n1}, {:num, n2}) do {:num, n1 * n2} end
+
+  def simplify_mul({:num, n1}, {:mul, {:num, mulnum1}, e2}) do
+    simplify({:mul, {:num, n1*mulnum1}, e2})
+  end
+
+  # def simplify_mul({:num, n1},{:mul, {:num, mulnum1}, mulexpr2}) do
+  #   {:mul, {:num, n1*mulnum1}, mulexpr2}
+  # end
+
+  # def simplify_mul({:num, n1},{:mul, mulexpr1, {:num, mulnum2}}) do
+  #   {:mul, {:num, n1*mulnum2}, mulexpr1}
+  # end
+
+  # def simplify_mul({:num, n1}, {:mul, {:num, mulnum1}, e2}) do
+  #   {:mul, {:num, n1*mulnum1}, e2}
+  # end
+  # def simplify_mul({:num, n1}, {:mul, e1, {:num, mulnum2}}) do
+  #   {:mul, {:num, n1*mulnum2}, e1}
+  # end
+  # def simplify_mul({:mul, {:num, mulnum1}, e2}, {:num, n2}) do
+  #   {:mul, {:num, mulnum1*n2}, e2}
+  # end
+  # def simplify_mul({:mul, e1, {:num, mulnum2}}, {:num, n2}) do
+  #   {:mul, {:num, mulnum2*n2}, e1}
+  # end
 
   def simplify_mul(e1, e2) do {:mul, e1, e2} end
 
@@ -103,14 +216,28 @@ defmodule Deriv do
 
   def simplify_exp(e1, e2) do {:exp, e1, e2} end
 
+  def simplify_div({:num, 0}, _) do {:num, 0} end
+
+  def simplify_div(e1, e2) do {:div, e1, e2} end
+
+  def simplify_ln({:num, 1}) do {:num, 0} end
+
+  def simplify_ln({:num, 0}) do {:num, 0} end
+
+  def simplify_ln(e) do {:ln, e} end
+
   # p_print functions converts from our syntax tree into strings for ease of reading
   def p_print({:num, n}) do "#{n}" end
 
   def p_print({:var, v}) do "#{v}" end
 
-  def p_print({:add, e1, e2}) do "#{p_print(e1)} + #{p_print(e2)}" end
+  def p_print({:add, e1, e2}) do "(#{p_print(e1)} + #{p_print(e2)})" end
 
-  def p_print({:mul, e1, e2}) do "(#{p_print(e1)}*#{p_print(e2)})" end
+  def p_print({:mul, e1, e2}) do "#{p_print(e1)}*#{p_print(e2)}" end
 
   def p_print({:exp, e1, e2}) do "(#{p_print(e1)})^(#{p_print(e2)})" end
+
+  def p_print({:div, e1, e2}) do "(#{p_print(e1)}/#{p_print(e2)})" end
+
+  def p_print({:ln , e1}) do "ln(#{p_print(e1)})" end
 end
