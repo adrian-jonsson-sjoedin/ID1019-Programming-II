@@ -4,7 +4,7 @@ defmodule Deriv do
           literal() | {:add, expr(), expr()} | {:mul, expr(), expr()}
           | {:exp, expr(), literal()} | {:div, literal(), expr()} |
           # {:ln, literal(), expr()} | {:ln, literal(), literal()}
-          {:ln, expr()}
+          {:ln, expr()} | {:sqrt, expr()}
 
   def test_simple() do
     e = {:add, {:mul, {:num, 2}, {:var, :x}}, {:num, 4}}
@@ -28,7 +28,7 @@ defmodule Deriv do
     e = {:add, {:var, :x}, {:mul, {:num, 5}, {:exp, {:var, :x}, {:num, 4}}}}
     d = deriv(e, :x)
     IO.write("Expression: #{p_print(e)}\n")
-    IO.write("Derivative of expression: #{p_print(d)}\n")
+    IO.write("Derivative: #{p_print(d)}\n")
     IO.write("Simplified: #{p_print(simplify(d))}\n")
     :ok
   end
@@ -96,6 +96,25 @@ defmodule Deriv do
     :ok
   end
 
+  def test_sqrt_simple() do
+    e = {:sqrt, {:var, :x}}
+    d = deriv(e, :x)
+    IO.write("Expression: #{p_print(e)}\n")
+    IO.write("Derivative of expression: #{p_print(d)}\n")
+    IO.write("Simplified: #{p_print(simplify(d))}\n")
+    :ok
+  end
+
+  def test_sqrt() do
+    e =
+      {:mul, {:num, 2}, {:sqrt, {:add, {:mul, {:num, 3}, {:exp, {:var, :x}, {:num, 2}}}, {:var, :x}}}}
+    d = deriv(e, :x)
+    IO.write("Expression: #{p_print(e)}\n")
+    IO.write("Derivative of expression: #{p_print(d)}\n")
+    IO.write("Simplified: #{p_print(simplify(d))}\n")
+    :ok
+  end
+
   ###### Our derivatives rules #######
 
   # derivative of a constant
@@ -131,18 +150,24 @@ defmodule Deriv do
     }
   end
 
+  #d/dx(ln(u(x))) = u'(x)/u(x)
   def deriv({:ln, e}, v) do {:div, deriv(e, v), e} end
 
-  # d/dx(k*ln(u(x)^n)) = kn*u'(x)/u(x)
-  def deriv({:mul, {:num, k}, {:exp, e, {:num, n}}}, v) do
-    {:div,
-      {:mul,
-        {:mul, {:num, k}, {:num, n}},
-        deriv(e, v)
-      },
-      {:exp, e, {:num, n}}
-    }
+  #d/dx(sqrt(u(x))) = u'(x)/(2*sqrt(u(x)))
+  def deriv({:sqrt, e}, v) do
+    {:div, deriv(e, v), {:mul, {:num, 2}, {:sqrt, e}}}
   end
+
+  # d/dx(k*ln(u(x)^n)) = kn*u'(x)/u(x)
+  # def deriv({:mul, {:num, k}, {:exp, e, {:num, n}}}, v) do
+  #   {:div,
+  #     {:mul,
+  #       {:mul, {:num, k}, {:num, n}},
+  #       deriv(e, v)
+  #     },
+  #     {:exp, e, {:num, n}}
+  #   }
+  # end
 
   ###### --------------------- #######
 
@@ -165,6 +190,8 @@ defmodule Deriv do
 
   def simplify({:ln, e}) do simplify_ln(simplify(e)) end
 
+  def simplify({:sqrt, e}) do simplify_sqrt(simplify(e)) end
+
   def simplify(e) do e end
 
   def simplify_add({:num, 0}, e2) do e2 end
@@ -180,32 +207,6 @@ defmodule Deriv do
   def simplify_mul({:num, 1}, e2) do e2 end
   def simplify_mul(e1, {:num, 1}) do e1 end
   def simplify_mul({:num, n1}, {:num, n2}) do {:num, n1 * n2} end
-
-  def simplify_mul({:num, n1}, {:mul, {:num, mulnum1}, e2}) do
-    simplify({:mul, {:num, n1*mulnum1}, e2})
-  end
-
-  # def simplify_mul({:num, n1},{:mul, {:num, mulnum1}, mulexpr2}) do
-  #   {:mul, {:num, n1*mulnum1}, mulexpr2}
-  # end
-
-  # def simplify_mul({:num, n1},{:mul, mulexpr1, {:num, mulnum2}}) do
-  #   {:mul, {:num, n1*mulnum2}, mulexpr1}
-  # end
-
-  # def simplify_mul({:num, n1}, {:mul, {:num, mulnum1}, e2}) do
-  #   {:mul, {:num, n1*mulnum1}, e2}
-  # end
-  # def simplify_mul({:num, n1}, {:mul, e1, {:num, mulnum2}}) do
-  #   {:mul, {:num, n1*mulnum2}, e1}
-  # end
-  # def simplify_mul({:mul, {:num, mulnum1}, e2}, {:num, n2}) do
-  #   {:mul, {:num, mulnum1*n2}, e2}
-  # end
-  # def simplify_mul({:mul, e1, {:num, mulnum2}}, {:num, n2}) do
-  #   {:mul, {:num, mulnum2*n2}, e1}
-  # end
-
   def simplify_mul(e1, e2) do {:mul, e1, e2} end
 
   def simplify_exp(_, {:num, 0}) do {:num, 1} end
@@ -226,6 +227,12 @@ defmodule Deriv do
 
   def simplify_ln(e) do {:ln, e} end
 
+  def simplify_sqrt({:num, 0}) do {:num, 0} end
+
+  def simplify_sqrt({:num, 1}) do {:num, 1} end
+
+  def simplify_sqrt(e) do {:sqrt, e} end
+
   # p_print functions converts from our syntax tree into strings for ease of reading
   def p_print({:num, n}) do "#{n}" end
 
@@ -240,4 +247,6 @@ defmodule Deriv do
   def p_print({:div, e1, e2}) do "(#{p_print(e1)}/#{p_print(e2)})" end
 
   def p_print({:ln , e1}) do "ln(#{p_print(e1)})" end
+
+  def p_print({:sqrt, e}) do "\u221A(#{p_print(e)})" end
 end
