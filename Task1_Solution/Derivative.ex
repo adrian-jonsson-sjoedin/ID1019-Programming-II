@@ -4,7 +4,7 @@ defmodule Deriv do
           literal() | {:add, expr(), expr()} | {:mul, expr(), expr()}
           | {:exp, expr(), literal()} | {:div, literal(), expr()} |
           # {:ln, literal(), expr()} | {:ln, literal(), literal()}
-          {:ln, expr()} | {:sqrt, expr()}
+          {:ln, expr()} | {:sqrt, expr()} | {:sin, expr()} | {:cos, expr()}
 
   def test_simple() do
     e = {:add, {:mul, {:num, 2}, {:var, :x}}, {:num, 4}}
@@ -115,6 +115,58 @@ defmodule Deriv do
     :ok
   end
 
+  def test_sin_simple() do
+    e = {:sin, {:var, :x}}
+    d = deriv(e, :x)
+    IO.write("Expression: #{p_print(e)}\n")
+    IO.write("Derivative of expression: #{p_print(d)}\n")
+    IO.write("Simplified: #{p_print(simplify(d))}\n")
+    :ok
+  end
+
+  def test_sin() do
+    e = {:mul,
+          {:num, 2},
+          {:sin,
+            {:add,
+              {:mul, {:num, 3}, {:exp, {:var, :x}, {:num, 2}}},
+              {:mul, {:num, 4}, {:var, :x}}
+            }
+          }
+        }
+    d = deriv(e, :x)
+    IO.write("Expression: #{p_print(e)}\n")
+    IO.write("Derivative of expression: #{p_print(d)}\n")
+    IO.write("Simplified: #{p_print(simplify(d))}\n")
+    :ok
+  end
+
+  def test_cos() do
+    e = {:mul,
+          {:num, 2},
+          {:cos,
+            {:add,
+              {:mul, {:num, 3}, {:exp, {:var, :x}, {:num, 2}}},
+              {:mul, {:num, 4}, {:var, :x}}
+            }
+          }
+        }
+    d = deriv(e, :x)
+    IO.write("Expression: #{p_print(e)}\n")
+    IO.write("Derivative of expression: #{p_print(d)}\n")
+    IO.write("Simplified: #{p_print(simplify(d))}\n")
+    :ok
+  end
+
+  def test_cos_simple() do
+    e = {:cos, {:var, :x}}
+    d = deriv(e, :x)
+    IO.write("Expression: #{p_print(e)}\n")
+    IO.write("Derivative of expression: #{p_print(d)}\n")
+    IO.write("Simplified: #{p_print(simplify(d))}\n")
+    :ok
+  end
+
   ###### Our derivatives rules #######
 
   # derivative of a constant
@@ -158,6 +210,16 @@ defmodule Deriv do
     {:div, deriv(e, v), {:mul, {:num, 2}, {:sqrt, e}}}
   end
 
+  #d/dx(sin(u(x))) = u'(x)cos(u(x))
+  def deriv({:sin, e}, v) do
+    {:mul, deriv(e, v), {:cos, e}}
+  end
+
+  #d/dc(cos(u(x))) = -u'(x)sin(u(x))
+  def deriv({:cos, e}, v) do
+    {:mul, {:mul, {:num, -1}, deriv(e, v)}, {:sin, e}}
+  end
+
   # d/dx(k*ln(u(x)^n)) = kn*u'(x)/u(x)
   # def deriv({:mul, {:num, k}, {:exp, e, {:num, n}}}, v) do
   #   {:div,
@@ -191,6 +253,10 @@ defmodule Deriv do
   def simplify({:ln, e}) do simplify_ln(simplify(e)) end
 
   def simplify({:sqrt, e}) do simplify_sqrt(simplify(e)) end
+
+  def simplify({:sin, e}) do simplify_sin(simplify(e)) end
+
+  def simplify({:cos, e}) do simplify_cos(simplify(e)) end
 
   def simplify(e) do e end
 
@@ -233,6 +299,28 @@ defmodule Deriv do
 
   def simplify_sqrt(e) do {:sqrt, e} end
 
+  def simplify_sin({:num, 0}) do {:num, 0} end
+  def simplify_sin({:num, 360}) do {:num, 0} end
+  def simplify_sin({:num, -360}) do {:num, 0} end
+  def simplify_sin({:num, 270}) do {:num, -1} end
+  def simplify_sin({:num, -270}) do {:num, 1} end
+  def simplify_sin({:num, 180}) do {:num, 0} end
+  def simplify_sin({:num, -180}) do {:num, 0} end
+  def simplify_sin({:num, 90}) do {:num, 1} end
+  def simplify_sin({:num, -90}) do {:num, -1} end
+  def simplify_sin(e) do {:sin, e} end
+
+  def simplify_cos({:num, 0}) do {:num, 1} end
+  def simplify_cos({:num, 360}) do {:num, 1} end
+  def simplify_cos({:num, -360}) do {:num, 1} end
+  def simplify_cos({:num, 270}) do {:num, 0} end
+  def simplify_cos({:num, -270}) do {:num, 0} end
+  def simplify_cos({:num, 180}) do {:num, -1} end
+  def simplify_cos({:num, -180}) do {:num, -1} end
+  def simplify_cos({:num, 90}) do {:num, 0} end
+  def simplify_cos({:num, -90}) do {:num, 0} end
+  def simplify_cos(e) do {:cos, e} end
+
   # p_print functions converts from our syntax tree into strings for ease of reading
   def p_print({:num, n}) do "#{n}" end
 
@@ -249,4 +337,8 @@ defmodule Deriv do
   def p_print({:ln , e1}) do "ln(#{p_print(e1)})" end
 
   def p_print({:sqrt, e}) do "\u221A(#{p_print(e)})" end
+
+  def p_print({:sin, e}) do "sin(#{p_print(e)})" end
+
+  def p_print({:cos, e}) do "cos(#{p_print(e)})" end
 end
