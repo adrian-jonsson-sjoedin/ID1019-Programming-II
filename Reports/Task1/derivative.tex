@@ -70,68 +70,32 @@ Lastly we needed a way to convert from our representation of an expression to so
 couple of functions called {\tt p\_print/1} and {\tt p\_print/2}.
 
 \section*{Result}
-Below are the result from derivating different one variable functions.
+Below are the result from running the {\tt test\_all/0} function which tests all derivatives in one long function.
 \begin{code}
     % \captionof{listing}{Class Structure}
     % \label{code:classStructure}
 \begin{minted}{bash}
-iex> Deriv.test_add()
-Expression: (x + 5)
-Derivative of expression: (1 + 0)
-Simplified: 1
+iex(13)> Deriv.test_all()  
+Expression: ((((((cos(x) + (5*x)) + ((x)^(3) + 4)) + sin(x)) + 
+sqrt(x)) + ln((x)^(2))) + (4/(((x*3) + 2))^(2)))
+
+Derivative of expression: ((((((((-1*1)*sin(x)) + ((0*x) + 
+(5*1))) + (((3*(x)^(2))*1) + 0)) + (1*cos(x))) + (1/(2*sqrt(x))))
+ + (((2*(x)^(1))*1)/(x)^(2))) + (((4*-2)*(((1*3) + (x*0)) + 0))/
+(((x*3) + 2))^(3)))
+
+Simplified: (((((((-1*sin(x)) + 5) + (3*(x)^(2))) + cos(x)) + 
+(1/(2*sqrt(x)))) + ((2*x)/(x)^(2))) + (-24/(((x*3) + 2))^(3)))
 :ok
-iex> Deriv.test_mul()
-Expression: (x + 5*(x)^(4))
-Derivative: (1 + (0*(x)^(4) + 5*4*(x)^(3)*1))
-Simplified: (1 + 5*4*(x)^(3))
-:ok
-iex> Deriv.test_exp2()
-Expression: ((2*x + 3))^(2)
-Derivative of expression: 2*((2*x + 3))^(1)*((0*x + 2*1) + 0)
-Simplified: 2*(2*x + 3)*2
-:ok
-iex> Deriv.test_div()      
-Expression: (4/((x*3 + 2))^(2))
-Derivative of expression: (4*-2*((1*3 + x*0) + 0)/((x*3 + 2))^(3))
-Simplified: (-24/((x*3 + 2))^(3))
-:ok
-iex> Deriv.test_ln1()
-Expression: ln((x)^(2))
-Derivative of expression: (2*(x)^(1)*1/(x)^(2))
-Simplified: (2*x/(x)^(2))
-:ok
-iex> Deriv.test_ln() 
-Expression: 2*ln(((2*x + 3))^(2))
-Derivative of expression: (0*ln(((2*x + 3))^(2)) + 
-2*(2*((2*x + 3))^(1)*((0*x + 2*1) + 0)/((2*x + 3))^(2)))
-Simplified: 2*(2*(2*x + 3)*2/((2*x + 3))^(2))
-:ok
-iex(72)> Deriv.test_sqrt()
-Expression: 2*sqrt((3*(x)^(2) + x))
-Derivative of expression: (0*sqrt((3*(x)^(2) + x)) + 
-2*(((0*(x)^(2) + 3*2*(x)^(1)*1) + 1)/2*sqrt((3*(x)^(2) + x))))
-Simplified: 2*((3*2*x + 1)/2*sqrt((3*(x)^(2) + x)))
-:ok
-iex> Deriv.test_sin() 
-Expression: 2*sin((3*(x)^(2) + 4*x))
-Derivative of expression: (0*sin((3*(x)^(2) + 4*x)) + 
-2*((0*(x)^(2) + 3*2*(x)^(1)*1) + 
-(0*x + 4*1))*cos((3*(x)^(2) + 4*x)))
-Simplified: 2*(3*2*x + 4)*cos((3*(x)^(2) + 4*x))
-:ok
-iex> Deriv.test_cos() 
-Expression: 2*cos((3*(x)^(2) + 4*x))
-Derivative of expression: (0*cos((3*(x)^(2) + 4*x)) + 
-2*-1*((0*(x)^(2) + 3*2*(x)^(1)*1) + 
-(0*x + 4*1))*sin((3*(x)^(2) + 4*x)))
-Simplified: 2*-1*(3*2*x + 4)*sin((3*(x)^(2) + 4*x))
-:ok   
 \end{minted}
 \end{code}
-
+Expression simplified by WolframAlpha: 
+\[x^3 + log(x^2) + 5x + \sqrt(x) + \frac{4}{(3 x + 2)^2} + sin(x) + cos(x) + 4\]
+Derivative simplified by WolframAlpha: 
+\[3x^2 - \frac{24}{(3 x + 2)^3} + \frac{1}{(2 \sqrt(x))} + \frac{2}{x} - sin(x) + cos(x) + 5 \]
 
 \section*{Discussion}
-The result show in the section is correct and matches those given by WolframAlpha. We can thus conclude that our program 
+As we can see the results are correct and matches those given by WolframAlpha. We can thus conclude that our program 
 works as intended and can derive all the functions specified in the task description. However the result is not in the 
 most user friendly form. Unfortunately this was something I couldn't fix with my limited knowledge of Elixir, and thus after
 spending a couple of hours on it I was forced to accept defeat. One workaround just to confirm my results is to simply 
