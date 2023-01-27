@@ -23,7 +23,7 @@ defmodule EnvTree do
   end
 
   # if key not found we return nil
-  def lookup(nil, _), do: nill
+  def lookup(nil, _), do: nil
   # we've found the key
   def lookup({:node, key, value, _, _}, key) do
     {key, value}

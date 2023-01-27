@@ -18,4 +18,10 @@ defmodule EnvList do
   def lookup([{key, _value}=pair | _], key), do: pair
   #when it is not the key we are looking for, we call lookup again until we either find it or the map is empty
   def lookup([_ | map], key), do: lookup(map, key)
+  #when map is empty
+  def remove([], _), do: nil
+  #when we find the key
+  def remove([{key, _} | map], key) do map end
+  #when we need to keep searching for the key
+  def remove([head|map], key) do [head | remove(map, key)] end
 end
