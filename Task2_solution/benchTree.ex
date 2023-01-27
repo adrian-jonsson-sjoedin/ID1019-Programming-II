@@ -8,8 +8,8 @@ defmodule BenchTree do
     :io.format("~6.s~12.s~12.s~12.s\n", ["n", "add", "lookup", "remove"])
 
     Enum.each(ls, fn i ->
-      {i, tla, tll, tlr} = bench(i, n)
-      :io.format("~6.w~12.2f~12.2f~12.2f\n", [i, tla / n, tll / n, tlr / n])
+      {i, time_add, time_lookup, time_remove} = bench(i, n)
+      :io.format("~6.w~12.2f~12.2f~12.2f\n", [i, time_add / n, time_lookup / n, time_remove / n])
     end)
   end
 
