@@ -64,9 +64,7 @@ defmodule Evaluation do
     if divisor == 0 do :undefined
     else
       gcd = Integer.gcd(dividend, divisor)
-      divid = dividend/gcd
-      divi = divisor/gcd
-      {:quotient, divid, divi}
+      {:quotient, dividend/gcd, divisor/gcd}
     end
   end
     #------------------------- ADD -------------------------

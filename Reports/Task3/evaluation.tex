@@ -1,0 +1,103 @@
+\documentclass[a4paper,11pt]{article}
+\usepackage{graphicx}
+\usepackage[utf8]{inputenc}
+\usepackage{hyperref}
+\usepackage{placeins}
+\usepackage[newfloat]{minted}
+\usepackage{caption}
+\usepackage{amssymb}
+
+\newenvironment{code}{\captionsetup{type=listing}}{}
+\SetupFloatingEnvironment{listing}{name=Code Overview}
+
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=black,      
+    urlcolor=blue,
+    citecolor=black,
+}
+
+\begin{document}
+
+\title{
+    \textbf{Task 3 Evaluation of an Expression}
+}
+\author{Adrian Jonsson Sjödin}
+\date{Spring Term 2023}
+
+\maketitle
+
+\section*{Introduction}
+The purpose of this task was to implement a program that evaluates a mathematical expression containing variables, and returns the result 
+given an environment for the variables. 
+
+\section*{Method}
+The way to solve this task was quite similar to the earlier derivatives task. Like there we started with defining the different allowed 
+expressions and what form a literal will take. 
+
+After this we started with implementing the functions given in the skeleton code, these being the {\tt eval/2} functions. Here, like in the previous tasks, we start with
+considering the base cases of what should happen when we want to evaluate a literal. For the number we simply return the number, while for the variable we 
+use Elixir's {\tt Map} module to retrieve the value bound to the variable. For the quotient we have to do a bit more. We want to evaluate fractions to the lowest common 
+denominator, as well as not have zero as a divisor. To do this we use a conditional {\tt if else} clause and the {\tt Integer} module's {\tt gcd/2} function. The code 
+for this can be seen in code overview \ref{code:evalQuot}
+
+Having done the two base cases for when 
+
+\begin{code}
+\captionof{listing}{Evaluation of quotient}
+\label{code:evalQuot}
+\begin{minted}{elixir}
+def eval({:quotient, dividend, divisor}, _environment) do
+    if divisor == 0 do :undefined
+    else
+        gcd = Integer.gcd(dividend, divisor)
+        {:quotient, dividend/gcd, divisor/gcd}
+    end
+end
+\end{minted}
+\end{code}
+
+Code
+\begin{minted}{elixir}
+    def deriv({:exp, u, {:num, n}}, v) do
+    {:mul, 
+        {:mul, {:num, n}, {:exp, u, {:num, n - 1}}},
+        deriv(u, v)
+    }
+  end
+\end{minted}
+
+Code in text {\tt p\_print/1} and {\tt p\_print/2}.
+
+\section*{Result}
+Code with caption and label for referencing
+\begin{code}
+\captionof{listing}{Caption here}
+\label{code:classStructure}
+\begin{minted}{elixir}
+iex(13)> Deriv.test_all()  
+Expression: ((((((cos(x) + (5*x)) + ((x)^(3) + 4)) + sin(x)) + 
+sqrt(x)) + ln((x)^(2))) + (4/(((x*3) + 2))^(2)))
+
+Derivative of expression: ((((((((-1*1)*sin(x)) + ((0*x) + 
+(5*1))) + (((3*(x)^(2))*1) + 0)) + (1*cos(x))) + (1/(2*sqrt(x))))
+ + (((2*(x)^(1))*1)/(x)^(2))) + (((4*-2)*(((1*3) + (x*0)) + 0))/
+(((x*3) + 2))^(3)))
+
+Simplified: (((((((-1*sin(x)) + 5) + (3*(x)^(2))) + cos(x)) + 
+(1/(2*sqrt(x)))) + ((2*x)/(x)^(2))) + (-24/(((x*3) + 2))^(3)))
+:ok
+\end{minted}
+\end{code}
+
+
+\section*{Discussion}
+Link
+\href{https://github.com/adrian-jonsson-sjoedin/ID1019-Programming-II/tree/main/Task1_Solution}{GitHub}.
+
+
+
+
+\end{document}
