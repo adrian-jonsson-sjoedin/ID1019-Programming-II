@@ -41,9 +41,13 @@ After this we started with implementing the functions given in the skeleton code
 considering the base cases of what should happen when we want to evaluate a literal. For the number we simply return the number, while for the variable we 
 use Elixir's {\tt Map} module to retrieve the value bound to the variable. For the quotient we have to do a bit more. We want to evaluate fractions to the lowest common 
 denominator, as well as not have zero as a divisor. To do this we use a conditional {\tt if else} clause and the {\tt Integer} module's {\tt gcd/2} function. The code 
-for this can be seen in code overview \ref{code:evalQuot}
+for this can be seen in code overview \ref{code:evalQuot}.
 
-Having done the two base cases for when 
+Having done the base cases for evaluation of a literal we now need to implement how to evaluate an expression. This is done by recursively calling the {\tt eval/2} function
+until it returns the value for the number or variable. When we have that it will go back through the functions and call the corresponding arithmetic functions. This way we will
+recursively calculate the expression. Furthermore if any of the expressions return undefined during this process, for example because of division by zero, we want the function 
+to immediately return {\tt :undefined} without making any further calculations. To achieve this we add a conditional check before each recursive call to {\tt eval/2}. This can 
+be seen in code overview \ref{code:evalAdd} where we have the code for when we evaluate an addition between two expressions.
 
 \begin{code}
 \captionof{listing}{Evaluation of quotient}
@@ -58,44 +62,62 @@ def eval({:quotient, dividend, divisor}, _environment) do
 end
 \end{minted}
 \end{code}
-
-Code
+\begin{code}
+\captionof{listing}{Evaluation of addition between two expressions}
+\label{code:evalAdd}
 \begin{minted}{elixir}
-    def deriv({:exp, u, {:num, n}}, v) do
-    {:mul, 
-        {:mul, {:num, n}, {:exp, u, {:num, n - 1}}},
-        deriv(u, v)
-    }
-  end
+def eval({:add, expression1, expression2}, environment) do
+    left = eval(expression1, environment)
+    right = eval(expression2, environment)
+    if left == :undefined || right == :undefined do
+        :undefined
+    else
+    add(left, right)
+    end
+end
 \end{minted}
+\end{code}
 
-Code in text {\tt p\_print/1} and {\tt p\_print/2}.
+The arithmetic functions {\tt add/2, subtract/2, multiply/2} and\\ {\tt divide/2} are private functions that takes the number passed along to them and 
+is what does the calculation of the expressions. When writing them it is important that we define them in the correct order and that we have a function
+for each possible combination that can exist. We must start with operations between two quotients, then number and quotient, and lastly between two numbers. 
+If we have between two numbers first the program will use that to try and calculate everything and it will crash. 
+
+Lastly we implemented a {\tt pretty\_print/1} function, like in earlier tasks, for easier testing and evaluation of expressions. The code for this is really similar to 
+earlier tasks so we will omit it here.
+
 
 \section*{Result}
-Code with caption and label for referencing
+In code overview  we can see the result from a few test and conclude that the program works as intended.
 \begin{code}
 \captionof{listing}{Caption here}
 \label{code:classStructure}
-\begin{minted}{elixir}
-iex(13)> Deriv.test_all()  
-Expression: ((((((cos(x) + (5*x)) + ((x)^(3) + 4)) + sin(x)) + 
-sqrt(x)) + ln((x)^(2))) + (4/(((x*3) + 2))^(2)))
-
-Derivative of expression: ((((((((-1*1)*sin(x)) + ((0*x) + 
-(5*1))) + (((3*(x)^(2))*1) + 0)) + (1*cos(x))) + (1/(2*sqrt(x))))
- + (((2*(x)^(1))*1)/(x)^(2))) + (((4*-2)*(((1*3) + (x*0)) + 0))/
-(((x*3) + 2))^(3)))
-
-Simplified: (((((((-1*sin(x)) + 5) + (3*(x)^(2))) + cos(x)) + 
-(1/(2*sqrt(x)))) + ((2*x)/(x)^(2))) + (-24/(((x*3) + 2))^(3)))
-:ok
+\begin{minted}{bash}
+    iex(5)> Evaluation.test1  
+    Expression: 2*x + 3 + 1/2
+    The environment is: %{x: 2}
+    Expected: 15/2
+    Result, pretty format: 15.0/2.0
+    Result: {:quotient, 15.0, 2.0}
+    iex(6)> Evaluation.test2
+    Expression: (2*a + c + 6/8) / (4)
+    The environment is: %{a: 1, b: 2, c: 3, d: 4}
+    Expected: 23/16
+    Result, pretty format: 23.0/16.0
+    Result: {:quotient, 23.0, 16.0}
+    iex(7)> Evaluation.test3
+    Expression: (2) / (0) + x + y
+    The environment is: %{x: 2, y: 3}
+    Expected: :undefined
+    Result, pretty format: Error: invalid expression
+    Result: :undefined
 \end{minted}
 \end{code}
 
 
 \section*{Discussion}
 Link
-\href{https://github.com/adrian-jonsson-sjoedin/ID1019-Programming-II/tree/main/Task1_Solution}{GitHub}.
+\href{https://github.com/adrian-jonsson-sjoedin/ID1019-Programming-II/tree/main/Task3_Solution}{GitHub}.
 
 
 
