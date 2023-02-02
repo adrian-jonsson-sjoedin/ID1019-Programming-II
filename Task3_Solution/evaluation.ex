@@ -1,5 +1,4 @@
 defmodule Evaluation do
-  import Integer
   @type literal() :: {:num, number()} | {:var, atom()} | {:quotient, number(), number()}
   @type expr() ::
           {:add, expr(), expr()}
