@@ -141,29 +141,37 @@ end
   #------------------------- Testing ---------------------
   def test1  do
     environment = %{x: 2}
-
     # 2x + 3 + 1/2
     expression = {:add, {:add, {:mul, {:num, 2}, {:var, :x}}, {:num, 3}}, {:quotient, 1, 2}}
 
-    # 2x + 3 - 1/2
-    # expression = {:sub, {:add, {:mul, {:num, 2}, {:var, :x}}, {:num, 3}}, {:quotient, 1, 2}}
-
-    # 2x + 3 + 3
-    # expression = {:add, {:add, {:mul, {:num, 2}, {:var, :x}}, {:num, 3}}, {:num, 3}}
-
-    # 2/0 + 3 + 3
-    # expression = {:add, {:add, {:div, {:num, 2}, {:num, 0}}, {:num, 3}}, {:num, 3}}
-
+    IO.write("Expression: #{pretty_print(expression)}\n")
+    IO.write("The environment is: #{inspect(environment)}\n")
+    IO.write("Expected: 15/2\n")
+    IO.write("Result, pretty format: #{pretty_print(eval(expression, environment))}\n")
+    IO.write("Result: ")
     eval(expression, environment)
   end
 
   def test2  do
-    env = %{a: 1, b: 2, c: 3, d: 4}
-    expr = {:div, {:add, {:add, {:mul, {:num, 2}, {:var, :a}}, {:num, 3}}, {:quotient, 6, 8}}, {:num, 4}}
-    expr1 = {:mul, {:quotient, 5, 2}, {:quotient, 4, 3}}
-    IO.write("Expression: #{pretty_print(expr)}\n")
+    environment = %{a: 1, b: 2, c: 3, d: 4}
+    expression = {:div, {:add, {:add, {:mul, {:num, 2}, {:var, :a}}, {:var, :c}}, {:quotient, 6, 8}}, {:num, 4}}
+    IO.write("Expression: #{pretty_print(expression)}\n")
+    IO.write("The environment is: #{inspect(environment)}\n")
     IO.write("Expected: 23/16\n")
+    IO.write("Result, pretty format: #{pretty_print(eval(expression, environment))}\n")
     IO.write("Result: ")
-    eval(expr, env)
+    eval(expression, environment)
+  end
+
+  def test3  do
+    environment = %{x: 2, y: 3}
+    # 2/0 + 3 + 3
+    expression = {:add, {:add, {:div, {:num, 2}, {:num, 0}}, {:var, :x}}, {:var, :y}}
+    IO.write("Expression: #{pretty_print(expression)}\n")
+    IO.write("The environment is: #{inspect(environment)}\n")
+    IO.write("Expected: :undefined\n")
+    IO.write("Result, pretty format: #{pretty_print(eval(expression, environment))}\n")
+    IO.write("Result: ")
+    eval(expression, environment)
   end
 end
