@@ -84,20 +84,38 @@ out the estimate and error for each round.
     Estimate: 3.143 (error: 0.0008159265358979341)
     Estimate: 3.141 (error: 1.5926535897934e-05)
 """
+# This function is the entry point for estimating the value of pi using Monte Carlo simulation. It takes the
+# parameters specified above
   def rounds(k, j, r) do
-    rounds(k, j, 0, r, 0)
+    rounds(k, j, 0, r, 0)#Initializes the first round of darts, by calling the rounds/5 function
+  end
+  # This function is called by the rounds/5 function below when the specified number of rounds have been completed.
+  # It takes five parameters:
+  #   0: the number of rounds remaining, which will be 0
+  #   _: a discard variable for the j parameter that is not used in this case
+  #   t: the total number of darts thrown so far
+  #   _: a discard variable for the r parameter that is not used in this case
+  #   a: the total number of darts that have landed inside the circle so far
+  defp rounds(0, _, t, _, a) do
+    IO.puts("Estimate: #{4.0 * a / t}")#Print the final estimate of pi, based on the total number of darts thrown and the number that landed inside the circle
   end
 
-  def rounds(0, _, t, _, a) do
-    IO.puts("Estimate: #{4.0 * a / t}")
-  end
-
-  def rounds(k, j, t, r, a) do
+  # This function calls the round/3 function to throw a number of darts and count the number that land inside the circle.
+  # It then updates the total number of darts thrown and the total number that have landed inside the circle, calculates
+  # the current estimate of pi, and prints it out, along with the error compared to the actual value of pi. Finally, it
+  # recursively calls itself with the j parameter doubled, until the specified number of rounds have been completed.
+  # It takes five parameters:
+  # k: the number of rounds remaining
+  # j: the number of darts to throw in this round
+  # t: the total number of darts thrown so far
+  # r: the radius of the circle used for estimation
+  # a: the total number of darts that have landed inside the circle so far
+  defp rounds(k, j, t, r, a) do
     a = round(j, r, a)
     t = t + j
-    pi = 4.0 * a / t
+    pi = 4.0 * a / t #Calculate the estimate of pi based on the current round's darts and all previously thrown darts
     IO.puts("Estimate: #{pi} (error: #{pi - :math.pi()})")
-    rounds(k-1, j*2, t, r, a)
+    rounds(k-1, j*2, t, r, a) # Recursive call to perform the next round with double the number of darts
   end
 end
 
