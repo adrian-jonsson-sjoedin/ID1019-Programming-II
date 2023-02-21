@@ -1,0 +1,124 @@
+\documentclass[a4paper,11pt]{article}
+\usepackage{graphicx}
+\usepackage[utf8]{inputenc}
+\usepackage{hyperref}
+\usepackage{placeins}
+\usepackage[newfloat]{minted}
+\usepackage{caption}
+\usepackage{amssymb}
+\usepackage{amsmath}
+
+\newenvironment{code}{\captionsetup{type=listing}}{}
+\SetupFloatingEnvironment{listing}{name=Code Overview}
+
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=black,      
+    urlcolor=blue,
+    citecolor=black,
+}
+
+\begin{document}
+
+\title{
+    \textbf{Task 6 Estimate $\pi$ Using Monte Carlo}
+}
+\author{Adrian Jonsson Sjödin}
+\date{Spring Term 2023}
+
+\maketitle
+
+\section*{Introduction}
+The task in this exercise is to implement a Monte Carlo simulation to estimate the value of $\pi$, and to improve the accuracy of
+the estimated value of $\pi$ by throwing more and more darts and continuously estimate a value for $\pi$. The task description 
+provides skeleton code for a function {\tt dart/1} that throws a random dart and returns true or false depending on whether the 
+dart hits inside an arch with a given radius. The task description also provides the skeleton code for a function {\tt round/3} 
+that throws a number of darts on a target with a given radius and counts how many darts land inside the arch. The task is to 
+implement a function called {\tt rounds/3} that runs a number of rounds, and displays the estimated value of pi after each round, 
+comparing the estimate to {\tt :math.pi()} to see how far off the the real (or elixirs) value of $\pi$ the estimate is. 
+The challenge is to beat the estimates found by Archimedes (two decimals) and Zu Chongzhi (six decimals).
+\section*{Method}
+The goal of this task was to estimate the value of $\pi$ using the Monte Carlo method. This meant simulating the throwing of darts
+at a target with a given radius and then count how many landed inside an arch with that radius. By repeating this process with more 
+and more darts we can get an estimate for the value of $\pi$. 
+
+The Monte Carlo method itself consist of randomly generate points inside of a square and then see how many of them land inside 
+an arch with in the square. The ratio of the number of points that fall inside the circle to the total number of points generated
+is an estimate of the ratio of the area of the circle to the area of the square. Using the formulas for the areas of the square 
+and the circle, we can derive the following expression:
+\[ \pi =4 \cdot \frac{\text{number of points inside circle}}{\text{total number of points}}\]
+
+As stated in the introduction the task included code skeleton for the three functions \texttt{dart/1}, \texttt{round/3}, 
+and \texttt{rounds/3}, and these where the ones we implemented to solve the problem.
+
+The \texttt{dart/1} function simulates the throwing of a single dart at a target with a given radius, and returns true if 
+the dart lands inside the arch, and false otherwise. This is done using Pythagoras Theorem. 
+
+The \texttt{round/3} function simulates a round of dart-throwing by generating a given number of darts and counting how 
+many land inside the arch. This is done with a simple \texttt{if else} statement in which we call the \texttt{dart/1} function
+to see if we should increment the accumulator or not.
+
+The \texttt{rounds/3} function is used to run multiple rounds of dart-throwing, and displays the estimated value of $\pi$ after 
+each round, along with the difference from the real value of $\pi$. The function uses different values for the number of rounds, 
+and number of darts per round. The code can be seen in code overview \ref{code:rounds}, and the full code with explaining 
+documentation and comments can be seen on my \href{https://github.com/adrian-jonsson-sjoedin/ID1019-Programming-II/tree/main/Task6_Solution}{GitHub}.
+\begin{code}
+\captionof{listing}{\texttt{rounds/5}}
+\label{code:rounds}
+\begin{minted}{elixir}
+def rounds(k, j, r) do
+    rounds(k, j, 0, r, 0)
+end
+defp rounds(0, _, t, _, a) do
+    IO.puts("Estimate: #{4.0 * a / t}")
+end
+defp rounds(k, j, t, r, a) do
+    a = round(j, r, a)
+    t = t + j
+    pi = 4.0 * a / t 
+    IO.puts("Estimate: #{pi} (error: #{pi - :math.pi()})")
+    rounds(k-1, j*2, t, r, a) 
+end
+\end{minted}
+\end{code}
+
+\section*{Result}
+We ran the \texttt{rounds/3} function with various parameter values to generate estimates for the value of $\pi$. 
+In table \ref{table:results} you can see the result of the closest estimate we achieved.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|c|c|c|c|}
+\hline
+\textbf{Rounds} & \textbf{Darts per Round} & \textbf{Target Radius} & \textbf{Estimate of $\pi$} \\
+\hline
+10 & 100,000 & 10,000 & 3.142112 \\
+10 & 1,000,000 & 100,000 & 3.141577 \\
+\hline
+\end{tabular}
+\caption{Estimated values of $\pi$ using different parameter values.}
+\label{table:results}
+\end{table}
+As shown in table \ref{table:results}, our estimates for the value of $\pi$ were accurate to 4 decimal places in both cases. 
+This is better than the estimate obtained by Archimedes (accurate to 2 decimal places), but worse than Zu Chongzhi 
+(accurate to 6 decimal places).
+
+\section*{Discussion}
+Our result shows that the Monte Carlo method can be utilized to estimate $\pi$ to at least four decimals. The limitation of this 
+approach is however that it is computationally intensive. Running multiple rounds of dart-throwing with a large number of darts per
+round was very time consuming and is why I choose to keep the rounds low, and instead have more darts and a larger radius. 
+
+Furthermore, the accuracy of our estimates depends all three parameters, so finding the optimal parameter values is a 
+trial-and-error process. You could most likely use this method to estimate $\pi$ to six, or even more decimal places, but because 
+of the above stated reasons I decided to stop when I achieved four decimal precision. It would simply take to long to be worth it 
+to use this method to achieve a higher precision, and that time would be better spent trying to implement another solution. 
+However if a accuracy of just two decimal is enough then this could be a worthwhile solution, and if nothing else it proves that the 
+theory behind the Monte Carlo method is correct. 
+
+
+
+
+
+\end{document}
