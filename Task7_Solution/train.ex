@@ -89,7 +89,6 @@ defmodule Train do
 
     iex> Train.main([:a, :b, :c, :d], 3)
     {0, [:a], [:b, :c, :d]}
-"""
   """
   def main([], n) do
     {n, [], []}
