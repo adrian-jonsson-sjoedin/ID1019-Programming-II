@@ -160,9 +160,14 @@ iex> Moves.sequence([{:one,1},{:two,2},{:one, -1},{:two,-2},{:one,1},
 \end{code}
 
 \section*{Discussion}
+The trickiest part of this task was as already stated the {\tt Shunt} module, and then in particular the second 
+part which was the {\tt few/2} function. At first I could only get it to return a list that on index 0 contained 
+another list with the correct simplified output, but then on index 1 and up we still had the values that we 
+wanted removed. The problem was with how I concatenated and called {\tt few/2} recursively. 
 
-
-
-
+The {\tt compress/1} function that I implemented became essentially redundant since {\tt few/2} already did the
+same simplification when calculating the moves needed. I did however test it on {\tt find/2} to make sure I got 
+the same result. Based on this it might be that I implemented {\tt few/2} wrongly and that it was only supposed 
+to remove zero moves.
 
 \end{document}
