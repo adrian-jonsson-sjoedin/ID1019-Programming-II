@@ -1,0 +1,168 @@
+\documentclass[a4paper,11pt]{article}
+\usepackage{graphicx}
+\usepackage[utf8]{inputenc}
+\usepackage{hyperref}
+\usepackage{placeins}
+\usepackage[newfloat]{minted}
+\usepackage{caption}
+\usepackage{amssymb}
+
+\newenvironment{code}{\captionsetup{type=listing}}{}
+\SetupFloatingEnvironment{listing}{name=Code Overview}
+
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=black,      
+    urlcolor=blue,
+    citecolor=black,
+}
+
+\begin{document}
+
+\title{
+    \textbf{Task 7 Train Shunting}
+}
+\author{Adrian Jonsson Sjödin}
+\date{Spring Term 2023}
+
+\maketitle
+
+\section*{Introduction}
+The task is to write a function that calculates a sequence of moves to rearrange a train of wagons on two tracks. 
+The train consists of a list of wagons, and the tracks are also represented as lists. The goal is to move the wagons
+from the main track to the two other tracks, and then back to the main track, in a specific order. The function should
+take the initial state of the train and return a list of moves.
+
+In this report, we present a solution to this task based on the information provided in the task description. Our method 
+uses the Train module to manipulate the train, the Moves module to represent individual moves, and the Shunt module to 
+calculate the sequence of moves.
+
+\section*{Method}
+The {\tt Train} module provides functions for manipulating a train represented as a list of wagons. The {\tt Moves} 
+module contains functions that represent moves on a train, and the {\tt Shunt} module provides the {\tt find/2} and 
+{\tt few/2} functions that takes two lists as arguments and returns a list of moves that will move the wagons in the 
+first list to match the order of the wagons in the second list. The difference between the two being that {\tt few/2} 
+optimizes the list of moves that are returned so that all zero moves are discarded and adjacent moves to the same track are
+combined.
+
+Both the {\tt Train} module and the {\tt Moves} module where quite simple to develope, since the task gave quite clear 
+instruction on what exactly each function in them should do, as well as examples of the expected output. The tricky part 
+was the {\tt Shunt} module.
+
+The {\tt find/2} function in the {\tt Shunt} module takes two lists as arguments, {\tt xs} and {\tt ys}, representing the 
+current configuration of the train on the main track ({\tt xs}), and the state we want to reach ({\tt ys}). For each 
+element {\tt y} in ys, we split xs using that element as the pivot, and calculate the number of wagons to move from the 
+main track to each of the two other tracks. We then append these moves to the result and recursively call find/2 with 
+the updated train and the remaining pivot elements. See code overview \ref{code:find}
+\begin{code}
+\captionof{listing}{The {\tt find/2} function}
+\label{code:find}
+\begin{minted}{elixir}
+def find([], []) do [] end
+def find(xs, [y | ys]) do
+    {hs, ts} = Train.split(xs, y)
+    n_hs = length(hs)
+    n_ts = length(ts)
+    [
+      {:one, n_ts + 1},
+      {:two, n_hs},
+      {:one, -(n_ts + 1)},
+      {:two, -n_hs} | find(Train.append(hs, ts), ys)
+    ]
+  end
+\end{minted}
+\end{code}
+
+The {\tt few/2} function works in a similar way to the {\tt find/2} function, by first splitting {\tt xs} into two smaller
+lists , {\tt hs} and {\tt ts}, calculate the length of these and then generate the moves. However we don't immediately 
+use recursion on the tail of the moves list and return it like in the {\tt find/2} function. Instead we first check if 
+{\tt hs} is empty and if it is we recursively cal the function on {\tt ts}, if it is not we instead concatenate the moves 
+with the result of calling few/2 on ts ++ hs and ys. See code overview \ref{code:few}.
+\begin{code}
+\captionof{listing}{The part of {\tt few/2} that is different from {\tt find/2}}
+\label{code:few}
+\begin{minted}{elixir}
+
+    moves = [
+      {:one, n_ts + 1},
+      {:two, n_hs},
+      {:one, -(n_ts + 1)},
+      {:two, -n_hs}
+    ]
+    if n_hs == 0 do
+      [] ++ few(ts, ys)
+    else
+      moves ++ few(ts ++ hs, ys)
+    end
+  end
+\end{minted}
+\end{code}
+
+Since this report needs to be between 2-3 pages I've omitted the \\{\tt compress/1} function here, however all code can 
+be found on my \href{https://github.com/adrian-jonsson-sjoedin/ID1019-Programming-II/tree/main/Task7_Solution}{GitHub}.
+
+\section*{Result}
+Code overview \ref{code:findResult} and \ref{code:fewResult} shows the output from reversing a three wagons long train 
+using {\tt find/2} and {\tt few/2}.
+Code overview \ref{code:compressResult} gives us the same result as in \ref{code:fewResult}, meaning {\tt compress/1} 
+works as intended.
+Finally in code overview \ref{code:sequence} we see that the found list of moves does work and reverses the order of the 
+train.  
+
+\begin{code}
+\captionof{listing}{Result from {\tt find/2}}
+\label{code:findResult}
+\begin{minted}{elixir}
+iex> Shunt.find([:a,:b,:c],[:c,:b,:a])
+[ one: 1, two: 2, one: -1, two: -2, one: 1, two: 1,
+  one: -1, two: -1, one: 1, two: 0, one: -1, two: 0]
+\end{minted}
+\end{code}
+
+\begin{code}
+\captionof{listing}{Result from {\tt few/2}}
+\label{code:fewResult}
+\begin{minted}{elixir}
+iex> Shunt.few([:a,:b,:c],[:c,:b,:a])
+[one: 1, two: 2, one: -1, two: -2, one: 1, two: 1, one: -1, two: -1]
+\end{minted}
+\end{code}
+
+\begin{code}
+\captionof{listing}{Result from {\tt compress/2} on {\tt find/2}}
+\label{code:compressResult}
+\begin{minted}{elixir}
+iex> Shunt.compress(Shunt.find([:a,:b,:c],[:c,:b,:a]))
+[one: 1, two: 2, one: -1, two: -2, one: 1, two: 1, one: -1, two: -1]
+\end{minted}
+\end{code}
+
+\begin{code}
+\captionof{listing}{Result from using {\tt sequence/2} on the list of moves returned by {\tt few/2} and {\tt compress/1}}
+\label{code:sequence}
+\begin{minted}{elixir}
+iex> Moves.sequence([{:one,1},{:two,2},{:one, -1},{:two,-2},{:one,1},
+                    {:two,1}, {:one,-1},{:two,-1}],{[:a,:b,:c],[],[]})
+[
+    {[:a, :b, :c], [], []},
+    {[:a, :b], [:c], []},
+    {[], [:c], [:a, :b]},
+    {[:c], [], [:a, :b]},
+    {[:c, :a, :b], [], []},
+    {[:c, :a], [:b], []},
+    {[:c], [:b], [:a]},
+    {[:c, :b], [], [:a]},
+    {[:c, :b, :a], [], []}
+  ]
+\end{minted}
+\end{code}
+
+\section*{Discussion}
+
+
+
+
+
+\end{document}
