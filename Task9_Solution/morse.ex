@@ -1,5 +1,5 @@
 defmodule Morse do
-  # Morse representation of the alphabet
+  # The Morse code alphabet represented as a map
   @morse_codes %{
     ?a => ".-",
     ?b => "-...",
@@ -39,8 +39,14 @@ defmodule Morse do
     ?0 => "-----",
     ?\s => "..--"
   }
-  def secret1(), do: '.- .-.. .-.. ..-- -.-- --- ..- .-. ..-- -... .- ... . ..-- .- .-. . ..-- -... . .-.. --- -. --. ..-- - --- ..-- ..- ...'
-  def secret2(), do: '.... - - .--. ... ---... .----- .----- .-- .-- .-- .-.-.- -.-- --- ..- - ..- -... . .-.-.- -.-. --- -- .----- .-- .- - -.-. .... ..--.. ...- .----. -.. .--.-- ..... .---- .-- ....- .-- ----. .--.-- ..... --... --. .--.-- ..... ---.. -.-. .--.-- ..... .----'
+  def secret1(),
+    do:
+      '.- .-.. .-.. ..-- -.-- --- ..- .-. ..-- -... .- ... . ..-- .- .-. . ..-- -... . .-.. --- -. --. ..-- - --- ..-- ..- ...'
+
+  def secret2(),
+    do:
+      '.... - - .--. ... ---... .----- .----- .-- .-- .-- .-.-.- -.-- --- ..- - ..- -... . .-.-.- -.-. --- -- .----- .-- .- - -.-. .... ..--.. ...- .----. -.. .--.-- ..... .---- .-- ....- .-- ----. .--.-- ..... --... --. .--.-- ..... ---.. -.-. .--.-- ..... .----'
+
   # The provided decoding tree
   defp decode_table do
     {:node, :na,
@@ -67,9 +73,11 @@ defmodule Morse do
   end
 
   @doc """
-  The time complexity of the encode function is O(n), where n is the length of the input text. This is because
-  each character in the input text is processed exactly once, and each processing step takes constant time on
-  average.
+  The time complexity of this implementation is O(nm), where n is the length of the input string and m is the
+  average length of the Morse code for each character. In the worst case, m is 4, which means the time complexity
+  is O(4n), or simply O(n). The space complexity is also O(n), because the function is tail-recursive and does
+  not consume additional stack space. This is because each character in the input text is processed exactly once,
+  and each processing step takes constant time on average.
 
   Specifically, the encode function performs the following steps:
 
@@ -99,22 +107,29 @@ defmodule Morse do
   Therefore, the overall time complexity is linear in the length of the input text.
   """
   def encode(text) do
+    # Convert the text to lowercase and split it into a charlist
     text
     |> String.downcase()
     |> String.to_charlist()
+    # Encode the charlist recursively
     |> encode_recursive([])
   end
 
+  # The recursive function that encodes each character
   defp encode_recursive([], acc), do: acc
 
   defp encode_recursive([char | rest], acc) do
     case Map.get(@morse_codes, char) do
+      # If the character doesn't have a corresponding Morse code, skip it
       nil ->
         encode_recursive(rest, acc)
 
+      # If the character has a corresponding Morse code
       morse_code ->
         case acc do
+          # If this is the first character being encoded, add its Morse code to the accumulator
           [] -> encode_recursive(rest, morse_code |> String.to_charlist())
+          # If this is not the first character being encoded, add a space character and the Morse code to the accumulator
           _ -> encode_recursive(rest, (acc ++ [32] ++ morse_code) |> List.to_charlist())
         end
     end
