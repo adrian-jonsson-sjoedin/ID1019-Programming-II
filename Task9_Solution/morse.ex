@@ -128,9 +128,9 @@ defmodule Morse do
       morse_code ->
         case acc do
           # If this is the first character being encoded, add its Morse code to the accumulator
-          [] -> encode_recursive(rest, morse_code |> String.to_charlist())
+          [] -> encode_recursive(rest, morse_code )
           # If this is not the first character being encoded, add a space character and the Morse code to the accumulator
-          _ -> encode_recursive(rest, (acc ++ [32] ++ morse_code) |> List.to_charlist())
+          _ -> encode_recursive(rest, (acc ++ [32] ++ morse_code) )
         end
     end
   end
