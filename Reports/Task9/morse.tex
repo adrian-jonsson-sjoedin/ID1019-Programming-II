@@ -22,13 +22,19 @@
 \begin{document}
 
 \title{
-    \textbf{Task 9 Morse coder}
+    \textbf{Task 9, version 2. Morse coder}
 }
 \author{Adrian Jonsson Sjödin}
 \date{Spring Term 2023}
 
 \maketitle
-
+\section*{What has changed}
+In the previous report there was a problem in the handling of encoding input strings into Morse code. I was using a tail 
+recursive method with an accumulator that after closer inspection ended up giving me a time complexity of $\mathcal{O}(n^2)$.
+This lead me to having to redo the whole encoding functionality in the program. However the decoding functionality worked as
+intended and have thus been left unchanged. The things that have been updated in the report is thus the first parts in the 
+Method section that concerns the encoding functionality and the Discussion section. The rest have been left unchanged since 
+the end result output was still the same and the decoding was left unchanged.
 \section*{Introduction}
 In this task we implement a Morse coder that can take a text input and encode it into morse code. We also implement a decoder that 
 can take a morse signal and output the message it contains. 
@@ -42,65 +48,101 @@ The requirement on the decoder is that it should use a data structure that will 
 it should be proportional to the length of the morse code.
 
 \section*{Method}
-We start with creating the functions needed for encoding a message into morse code. The first thing we do is represent the morse code 
-alphabet as a map (see fig. \ref{code:morseMap} who show the first few lines of it). They will be used when we recursively encode each
-character. First however we need to convert the text we receive to a charlist and convert all character to lowercase (see fig. \ref{code:encode}). 
-
-When this is done 
-we can start the encoding. Since we want to achieve a low time complexity we use a tail recursive strategy when encoding each character 
-(see fig. \ref{code:encode_recursive}). The {\tt encode\_recursive/2} function processes each character in the charlist exactly once. 
-For each character, it looks up its morse code in the map using {\tt Map.get()}. This lookup process takes $\mathcal{O}(log(k))$ time 
-on average, where \textit{k} is the number of keys in the map seen in fig. \ref{code:morseMap}. However since \textit{k} is constant 
-(in this case 36), the lookup operation can be considered a constant time operation and thus is $\mathcal{O}(1)$.
-
-Overall the time complexity of this implementation is $\mathcal{O}(n\cdot m)$, where \textit{n} is the length of the input string and 
-\textit{m} is the average length of the Morse code for each character. In the worst case, $m$ is 4, which means the time complexity
-is $\mathcal{O}(4n)$, or simply $\mathcal{O}(n)$.
+For the encoding function we are provided with a private function that returns a list of tuples with character codes and their morse code 
+representation (see fig \ref{code:morseMap}). We will later use this when we encode a message into morse code.
 
 \begin{code}
-\captionof{listing}{Morse code map}
+\captionof{listing}{Char codes and morse representation}
 \label{code:morseMap}
 \begin{minted}{elixir}
-@morse_codes %{
-    ?a => ".-",
-    ?b => "-...",
-    ?c => "-.-.",
-    ?d => "-..",
-    ?e => ".",
+defp char_codes do
+  [
+    {32, '..--'},
+    .
+    .
+    .
+    {122, '--..'}
+    ]
+end
 \end{minted}
 \end{code}
+
+Now we can start on the main encoding function {\tt encode/1} (see fig. \ref{code:encode}). This is the function that will be called to convert a message into morse code. 
+It take an input string and first convert everything into lower case and then into a list of character codes. We then build the encoding table 
+by calling the private {\tt build\_encode\_table/0} function (see fig. \ref{code:build}). This function creates a tuple with morse code representations for ASCII characters. 
+It uses the {\tt char\_codes/0} function to get the list of tuples, fills in any missing codes with {\tt :na} using the {\tt fill\_codes/2} 
+function (see fig. \ref{code:fill}), and then converts the list to a tuple. The {\tt fill\_codes/2} function is a recursive function that fills in missing codes in the 
+encoding table with {\tt :na}. It takes a list of tuples and an index and does the following:
+\begin{enumerate}
+\item If the list is empty, return an empty list.
+\item If the first element of the tuple matches the index, add the Morse code to the list and call itself recursively with the remaining tuples 
+and an incremented index.
+\item If the first element of the tuple doesn't match the index, add :na to the list and call itself recursively with the same tuples and an 
+incremented index.
+\end{enumerate}
+
+
 \begin{code}
 \captionof{listing}{The {\tt encode/1} function}
 \label{code:encode}
 \begin{minted}{elixir}
 def encode(text) do
-    text
-    |> String.downcase()
-    |> String.to_charlist()
-    |> encode_recursive([])
+  input = String.to_charlist(String.downcase(text))
+  table = build_encoding_table()
+  process_encode(input, [], table)
 end
 \end{minted}
 \end{code}
+
 \begin{code}
-\captionof{listing}{The {\tt encode\_recursive/2} function}
-\label{code:encode_recursive}
+\captionof{listing}{The {\tt build\_encoding\_table/3} function}
+\label{code:build}
 \begin{minted}{elixir}
-defp encode_recursive([], acc), do: acc
-defp encode_recursive([char | rest], acc) do
- case Map.get(@morse_codes, char) do
- # If the character doesn't have a corresponding Morse code, skip it
-  nil ->
-   encode_recursive(rest, acc)
-  morse_code ->
-   case acc do
-   # If this is the first character being encoded, add its Morse code to 
-   # the accumulator
-     [] -> encode_recursive(rest, morse_code |> String.to_charlist())
-     # If this is not the first character being encoded, add a space character 
-     # and the Morse code to the accumulator
-     _ -> encode_recursive(rest, (acc ++ [32] ++ morse_code) |> List.to_charlist())
-   end
- end
+defp build_encoding_table() do
+  char_codes()
+  |> fill_codes(0)
+  |> List.to_tuple()
+end
+\end{minted}
+\end{code}
+
+\begin{code}
+\captionof{listing}{The {\tt fill\_codes/2} function}
+\label{code:fill}
+\begin{minted}{elixir}
+defp fill_codes([], _), do: []
+defp fill_codes([{n, code} | codes], n), do: [code | fill_codes(codes, n + 1)]
+defp fill_codes(codes, n), do: [:na | fill_codes(codes, n + 1)]
+\end{minted}
+\end{code}
+
+Having build the encoding table we now call the private {\tt process\_encode/3} function (see fig. \ref{code:process}) that is a tail recursive function that recursively 
+encodes the input list of characters into morse code using the provided encoding table. This function process each character code in the char list
+one by one and looks up the corresponding morse representation with {\tt find\_code/2} (see fig. \ref{code:findCombine}), and then call itself recursively with the remaining
+character codes and the found morse code saved. When this has gone through the whole input message it will call the function 
+{\tt combine\_codes/2} (see fig. \ref{code:findCombine}) that takes the saved morse codes and combines them into a single list, adding a space 
+between each morse code, before presenting the result.   
+
+\begin{code}
+\captionof{listing}{The {\tt process\_encode/3} function}
+\label{code:process}
+\begin{minted}{elixir}
+defp process_encode([], all, _), do: combine_codes(all, [])
+defp process_encode([char | rest], sofar, table) do
+  code = find_code(char, table)
+  process_encode(rest, [code | sofar], table)
+end
+\end{minted}
+\end{code}
+
+\begin{code}
+\captionof{listing}{The {\tt find\_codes/2} and {\tt combine\_codes/2} functions}
+\label{code:findCombine}
+\begin{minted}{elixir}
+defp find_code(char, table), do: elem(table, char)
+defp combine_codes([], done), do: done
+defp combine_codes([code | rest], sofar) do
+  combine_codes(rest, code ++ [?\s | sofar])
 end
 \end{minted}
 \end{code}
@@ -211,16 +253,33 @@ iex> Morse.decode(secret2)
 \end{minted}
 \end{code}
 \section*{Discussion}
-As already discussed in the Method section the encoding fulfills the requirements on both points. So let us discuss the time complexity 
-of the decoding here instead.
-
-The time complexity should be $\mathcal{O}(n)$, where $n$ is the length of the morse signal string. This because {\tt decode} calls upon 
+The time complexity for the decoding should be $\mathcal{O}(n)$, where $n$ is the length of the morse signal string. This because {\tt decode} calls upon 
 the function {\tt decode\_char} on each element of the string until it is fully decoded, or an error occur. Since each character is only
 visited once and the {\tt decode\_char} function is $\mathcal{O}(1)$, the time complexity of the decode function is $\mathcal{O}(n)$.
 The {\tt decode\_char} function is a constant time operation since it is a simple pattern-matching operation that does
-not depend on the length of the input. This means that the decoding also satisfies the requirements. 
+not depend on the length of the input. This means that the decoding satisfies the requirements. 
 
-The full code can be found on my \href{https://github.com/adrian-jonsson-sjoedin/ID1019-Programming-II/tree/main/Task1_Solution}{GitHub}.
+When it comes to the encoding let us break it down and first look at each functions time complexity before looking at the overall time complexity.
+
+The functions {\tt char\_codes/0}, {\tt build\_encoding\_table/0}, {\tt find\_code/2} and {\tt fill\_codes} have a time complexity of 
+$\mathcal{O}(1)$. This is because the size of {\tt char\_codes/0} is fixed and each of the following functions iterates over it once while doing
+its thing.
+
+The function {\tt encode/1} has a time complexity of $\mathcal{O}(n)$, where $n$ is the number of characters in the input string. This because 
+each character is processed once in the {\tt process\_encode/3} function, making that the dominating time operation in {\tt encode/1}.
+
+{\tt process\_encode/3} have a time complexity of $\mathcal{O}(n)$, where $n$ is the number of characters in the input list passed to it. It 
+iterates over this list once from start to end and swaps out the character codes with the morse code recursively.
+
+Lastly we have the function {\tt combine\_codes/2} that is called when {\tt process\_encode/2} have gone through its list. This function will 
+go through morse list and combine the codes and will thus have a time complexity of $\mathcal{O}(m)$, where $m$ is the length of the list of 
+morse codes.
+
+This means that overall {\tt encode/1} will have a time complexity of \\$\mathcal{O}(n+m) = \mathcal{O}(k)$, and thus we satisfy the conditions
+given for the encode functionality.
+
+The full code can be found on my \href{https://github.com/adrian-jonsson-sjoedin/ID1019-Programming-II/tree/main/Task1_Solution}{GitHub} under 
+the branch "new-morse".
 
 
 
