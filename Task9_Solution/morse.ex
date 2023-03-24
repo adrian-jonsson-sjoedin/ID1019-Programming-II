@@ -1,44 +1,100 @@
 defmodule Morse do
   # The Morse code alphabet represented as a map
-  @morse_codes %{
-    ?a => '.-',
-    ?b => '-...',
-    ?c => '-.-.',
-    ?d => '-..',
-    ?e => '.',
-    ?f => '..-.',
-    ?g => '--.',
-    ?h => '....',
-    ?i => '..',
-    ?j => '.---',
-    ?k => '-.-',
-    ?l => '.-..',
-    ?m => '--',
-    ?n => '-.',
-    ?o => '---',
-    ?p => '.--.',
-    ?q => '--.-',
-    ?r => '.-.',
-    ?s => '...',
-    ?t => '-',
-    ?u => '..-',
-    ?v => '...-',
-    ?w => '.--',
-    ?x => '-..-',
-    ?y => '-.--',
-    ?z => '--..',
-    ?1 => '.----',
-    ?2 => '..---',
-    ?3 => '...--',
-    ?4 => '....-',
-    ?5 => '.....',
-    ?6 => '-....',
-    ?7 => '--...',
-    ?8 => '---..',
-    ?9 => '----.',
-    ?0 => '-----',
-    ?\s => '..--'
-  }
+  # @morse_codes %{
+  #   ?a => '.-',
+  #   ?b => '-...',
+  #   ?c => '-.-.',
+  #   ?d => '-..',
+  #   ?e => '.',
+  #   ?f => '..-.',
+  #   ?g => '--.',
+  #   ?h => '....',
+  #   ?i => '..',
+  #   ?j => '.---',
+  #   ?k => '-.-',
+  #   ?l => '.-..',
+  #   ?m => '--',
+  #   ?n => '-.',
+  #   ?o => '---',
+  #   ?p => '.--.',
+  #   ?q => '--.-',
+  #   ?r => '.-.',
+  #   ?s => '...',
+  #   ?t => '-',
+  #   ?u => '..-',
+  #   ?v => '...-',
+  #   ?w => '.--',
+  #   ?x => '-..-',
+  #   ?y => '-.--',
+  #   ?z => '--..',
+  #   ?1 => '.----',
+  #   ?2 => '..---',
+  #   ?3 => '...--',
+  #   ?4 => '....-',
+  #   ?5 => '.....',
+  #   ?6 => '-....',
+  #   ?7 => '--...',
+  #   ?8 => '---..',
+  #   ?9 => '----.',
+  #   ?0 => '-----',
+  #   ?\s => '..--'
+  # }
+  # Morse representation of common characters.
+  # This function returns a list of tuples with character codes and their corresponding Morse code
+  # representations.
+
+  defp char_codes do
+    [
+      {32, '..--'},
+      {37, '.--.--'},
+      {44, '--..--'},
+      {45, '-....-'},
+      {46, '.-.-.-'},
+      {47, '.-----'},
+      {48, '-----'},
+      {49, '.----'},
+      {50, '..---'},
+      {51, '...--'},
+      {52, '....-'},
+      {53, '.....'},
+      {54, '-....'},
+      {55, '--...'},
+      {56, '---..'},
+      {57, '----.'},
+      {58, '---...'},
+      {61, '.----.'},
+      {63, '..--..'},
+      {64, '.--.-.'},
+      {97, '.-'},
+      {98, '-...'},
+      {99, '-.-.'},
+      {100, '-..'},
+      {101, '.'},
+      {102, '..-.'},
+      {103, '--.'},
+      {104, '....'},
+      {105, '..'},
+      {106, '.---'},
+      {107, '-.-'},
+      {108, '.-..'},
+      {109, '--'},
+      {110, '-.'},
+      {111, '---'},
+      {112, '.--.'},
+      {113, '--.-'},
+      {114, '.-.'},
+      {115, '...'},
+      {116, '-'},
+      {117, '..-'},
+      {118, '...-'},
+      {119, '.--'},
+      {120, '-..-'},
+      {121, '-.--'},
+      {122, '--..'}
+    ]
+  end
+
+  # These functions return predefined secret messages in Morse code.
   def secret1(),
     do:
       '.- .-.. .-.. ..-- -.-- --- ..- .-. ..-- -... .- ... . ..-- .- .-. . ..-- -... . .-.. --- -. --. ..-- - --- ..-- ..- ...'
@@ -48,6 +104,7 @@ defmodule Morse do
       '.... - - .--. ... ---... .----- .----- .-- .-- .-- .-.-.- -.-- --- ..- - ..- -... . .-.-.- -.-. --- -- .----- .-- .- - -.-. .... ..--.. ...- .----. -.. .--.-- ..... .---- .-- ....- .-- ----. .--.-- ..... --... --. .--.-- ..... ---.. -.-. .--.-- ..... .----'
 
   # The provided decoding tree
+  # This function returns a tree structure for decoding Morse code.
   defp decode_table do
     {:node, :na,
      {:node, 116,
@@ -72,68 +129,81 @@ defmodule Morse do
         {:node, 104, {:node, 52, nil, nil}, {:node, 53, nil, nil}}}}}}
   end
 
-  @doc """
-  The time complexity of this implementation is O(nm), where n is the length of the input string and m is the
-  average length of the Morse code for each character. In the worst case, m is 4, which means the time complexity
-  is O(4n), or simply O(n). The space complexity is also O(n), because the function is tail-recursive and does
-  not consume additional stack space. This is because each character in the input text is processed exactly once,
-  and each processing step takes constant time on average.
-
-  Specifically, the encode function performs the following steps:
-
-    Convert the input text to lowercase using String.downcase(). This takes O(n) time, where n is the length of
-    the input text.
-
-    Convert the lowercase text to a charlist using String.to_charlist(). This takes O(n) time as well because
-    each character in the string needs to be converted to a Unicode codepoint in the charlist.
-
-    Call the encode_recursive function with the empty charlist as the initial value for acc. This takes constant
-    time.
-
-    encode_recursive processes each character in the charlist exactly once. For each character, it looks up its
-    Morse code in the map using Map.get(), which takes O(log k) time on average, where k is the number of keys
-    in the map (in this case, 36). Since k is a constant, we can treat this lookup as a constant-time operation
-    on average.
-
-    If the Morse code string is not nil, encode_recursive concatenates it to the acc charlist using the ++ operator.
-    If acc is empty, this takes O(m) time, where m is the length of the Morse code string. Otherwise, it takes
-    O(m + 1) time because the ++ operator first adds a space character to the acc charlist before concatenating
-    the Morse code string.
-
-    Finally, encode_recursive returns the resulting charlist as the encoded message.
-
-  Overall, the time complexity of the encode function is O(n) because each step takes constant time on average,
-  and the longest step (the charlist concatenation in step 5) takes O(m + 1) time, where m is a constant.
-  Therefore, the overall time complexity is linear in the length of the input text.
-  """
+  # Encode a given text into Morse code.
+  # @param text: The text to be encoded into Morse code.
+  # @return: The encoded Morse code representation of the input text.
+  # Time complexity: O(n), where n is the number of characters in the input text.
+  # Each character is processed once in process_encode/3.
   def encode(text) do
-    # Convert the text to lowercase and split it into a charlist
-    text
-    |> String.downcase()
-    |> String.to_charlist()
-    # Encode the charlist recursively
-    |> encode_recursive([])
+    input = String.to_charlist(String.downcase(text))
+    table = build_encoding_table()
+    process_encode(input, [], table)
   end
 
-  # The recursive function that encodes each character
-  defp encode_recursive([], acc), do: acc
-
-  defp encode_recursive([char | rest], acc) do
-    case Map.get(@morse_codes, char) do
-      # If the character doesn't have a corresponding Morse code, skip it
-      nil ->
-        encode_recursive(rest, acc)
-
-      # If the character has a corresponding Morse code
-      morse_code ->
-        case acc do
-          # If this is the first character being encoded, add its Morse code to the accumulator
-          [] -> encode_recursive(rest, morse_code )
-          # If this is not the first character being encoded, add a space character and the Morse code to the accumulator
-          _ -> encode_recursive(rest, (acc ++ [32] ++ morse_code) )
-        end
-    end
+  # process_encode/3 is a helper function that recursively encodes the input list of characters
+  # into Morse code using a provided encoding table.
+  # Time complexity: O(n), where n is the number of characters in the input list.
+  defp process_encode([], all, _), do: combine_codes(all, [])
+  defp process_encode([char | rest], sofar, table) do
+    code = find_code(char, table)
+    process_encode(rest, [code | sofar], table)
   end
+
+  # Helper function to combine the Morse codes.
+  # Time complexity: O(n), where n is the length of the list of Morse codes.
+  defp combine_codes([], done), do: done
+  defp combine_codes([code | rest], sofar) do
+    combine_codes(rest, code ++ [?\s | sofar])
+  end
+
+  # Helper function to build an encoding table from the char_codes list.
+  # Time complexity: O(1), since the size of char_codes is fixed.
+  defp build_encoding_table() do
+    char_codes()
+    |> fill_codes(0)
+    |> List.to_tuple()
+  end
+
+  # Helper function to find the Morse code for a character from the encoding table.
+  # Time complexity: O(1), since the size of the encoding table is fixed.
+  defp find_code(char, table), do: elem(table, char)
+
+  # Helper function to fill the encoding table with
+  # Morse codes from char_codes.
+  # Time complexity: O(m), where m is the number of elements in char_codes.
+  # Or O(1) since char_codes is fixed.
+  defp fill_codes([], _), do: []
+  defp fill_codes([{n, code} | codes], n), do: [code | fill_codes(codes, n + 1)]
+  defp fill_codes(codes, n), do: [:na | fill_codes(codes, n + 1)]
+
+  # def encode(text) do
+  #   # Convert the text to lowercase and split it into a charlist
+  #   text
+  #   |> String.downcase()
+  #   |> String.to_charlist()
+  #   # Encode the charlist recursively
+  #   |> encode_recursive([])
+  # end
+
+  # # The recursive function that encodes each character
+  # defp encode_recursive([], acc), do: acc
+
+  # defp encode_recursive([char | rest], acc) do
+  #   case Map.get(@morse_codes, char) do
+  #     # If the character doesn't have a corresponding Morse code, skip it
+  #     nil ->
+  #       encode_recursive(rest, acc)
+
+  #     # If the character has a corresponding Morse code
+  #     morse_code ->
+  #       case acc do
+  #         # If this is the first character being encoded, add its Morse code to the accumulator
+  #         [] -> encode_recursive(rest, morse_code )
+  #         # If this is not the first character being encoded, add a space character and the Morse code to the accumulator
+  #         _ -> encode_recursive(rest, (acc ++ [32] ++ morse_code) )
+  #       end
+  #   end
+  # end
 
   # Public function that decodes a Morse signal
   # Input:
